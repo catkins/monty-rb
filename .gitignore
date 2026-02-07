@@ -1,0 +1,36 @@
+# Rust build artifacts
+/target/
+/ext/monty/target/
+
+# Lock files (generated)
+Cargo.lock
+Gemfile.lock
+
+# Compiled native extensions
+*.bundle
+*.so
+*.dll
+*.o
+*.a
+
+# Compiled extension output directory
+/lib/monty/*.bundle
+/lib/monty/*.so
+/lib/monty/*.dll
+/lib/monty/[0-9]*
+
+# Ruby gem artifacts
+/pkg/
+/tmp/
+*.gem
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
