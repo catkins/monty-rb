@@ -174,6 +174,16 @@ result = run.call_with_externals do |call|
   end
 end
 
+# Capture output and apply limits
+result = run.call_with_externals(capture_output: true, limits: { max_duration: 2.0 }) do |call|
+  case call.function_name
+  when "fetch"
+    Net::HTTP.get(URI(call.args[0]))
+  end
+end
+# result[:result] => Python return value
+# result[:output] => captured stdout
+
 # Manual step-through API
 run = Monty::Run.new(code, external_functions: ["fetch"])
 progress = run.start

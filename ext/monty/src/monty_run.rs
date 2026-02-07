@@ -168,7 +168,28 @@ impl Run {
             .start(monty_inputs, NoLimitTracker, &mut print)
             .map_err(map_monty_exception)?;
 
-        Progress::from_run_progress(progress, print.into_output())
+        Progress::from_run_progress_no_limit(progress, print.into_output())
+    }
+
+    /// Start iterative execution with resource limits.
+    /// Consumes the Run — it cannot be used again after this.
+    fn start_with_limits(&self, inputs: RArray, limits: RHash) -> Result<Progress, Error> {
+        let monty_run = self
+            .inner
+            .borrow_mut()
+            .take()
+            .ok_or_else(consumed_error)?;
+
+        let monty_inputs = ruby_array_to_monty_vec(inputs)?;
+        let resource_limits = parse_limits_hash(&limits)?;
+        let tracker = LimitedTracker::new(resource_limits);
+        let mut print = CollectStringPrint::new();
+
+        let progress = monty_run
+            .start(monty_inputs, tracker, &mut print)
+            .map_err(map_monty_exception)?;
+
+        Progress::from_run_progress_limited(progress, print.into_output())
     }
 
     /// Serialize the Run to bytes
@@ -215,6 +236,7 @@ pub fn define_run_class(ruby: &Ruby, module: &magnus::RModule) -> Result<(), Err
         method!(Run::run_capturing_with_limits, 2),
     )?;
     class.define_method("_start", method!(Run::start, 1))?;
+    class.define_method("_start_with_limits", method!(Run::start_with_limits, 2))?;
     class.define_method("_dump", method!(Run::dump, 0))?;
 
     Ok(())

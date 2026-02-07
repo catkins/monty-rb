@@ -70,6 +70,7 @@ module Monty
     # NOTE: This consumes the Run. It cannot be used again after calling start.
     #
     # @param inputs positional arguments matching the input variable names
+    # @param limits [Hash, nil] resource limits (max_allocations:, max_duration:, max_memory:, etc.)
     # @return [Monty::FunctionCall, Monty::PendingFutures, Monty::Complete]
     #
     # @example
@@ -83,8 +84,12 @@ module Monty
     #
     #   final_value = progress.value  # Monty::Complete
     #
-    def start(*inputs)
-      _start(inputs)
+    def start(*inputs, limits: nil)
+      if limits
+        _start_with_limits(inputs, limits)
+      else
+        _start(inputs)
+      end
     end
 
     # Execute with a block that handles external function calls.
@@ -93,9 +98,11 @@ module Monty
     # Execution continues automatically until completion.
     #
     # @param inputs positional arguments matching the input variable names
+    # @param limits [Hash, nil] resource limits (max_allocations:, max_duration:, max_memory:, etc.)
+    # @param capture_output [Boolean] if true, returns a Hash with :result and :output keys
     # @yield [Monty::FunctionCall] called when Python invokes an external function
     # @yieldreturn [Object] the return value to provide to the Python code
-    # @return [Object] the final Python return value converted to Ruby
+    # @return [Object] the final Python return value converted to Ruby, or Hash if capture_output
     #
     # @example
     #   result = run.call_with_externals(input) do |call|
@@ -107,15 +114,21 @@ module Monty
     #     end
     #   end
     #
-    def call_with_externals(*inputs, &block)
+    def call_with_externals(*inputs, limits: nil, capture_output: false, &block)
       raise ArgumentError, "a block is required" unless block_given?
 
-      progress = start(*inputs)
+      progress = start(*inputs, limits: limits)
+      output = +""
 
       loop do
+        if capture_output && progress.respond_to?(:output)
+          output << progress.output
+        end
+
         case progress
         when Monty::Complete
-          return progress.value
+          result = progress.value
+          return capture_output ? { result: result, output: output } : result
         when Monty::FunctionCall
           result = yield progress
           progress = progress.resume(result)

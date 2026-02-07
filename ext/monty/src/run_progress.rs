@@ -1,8 +1,8 @@
 use magnus::value::ReprValue;
 use magnus::{method, Error, Module, RArray, Ruby, Value};
 use monty_lang::{
-    CollectStringPrint, ExternalResult, FutureSnapshot, MontyObject, NoLimitTracker, RunProgress,
-    Snapshot,
+    CollectStringPrint, ExternalResult, FutureSnapshot, LimitedTracker, MontyObject, NoLimitTracker,
+    RunProgress, Snapshot,
 };
 use std::cell::RefCell;
 
@@ -20,7 +20,7 @@ pub struct FunctionCall {
     kwargs: Vec<(MontyObject, MontyObject)>,
     call_id: u32,
     output: String,
-    state: RefCell<Option<Snapshot<NoLimitTracker>>>,
+    state: RefCell<Option<SnapshotState>>,
 }
 
 impl FunctionCall {
@@ -66,11 +66,22 @@ impl FunctionCall {
         let monty_result = ruby_to_monty(result)?;
         let mut print = CollectStringPrint::new();
 
-        let progress = snapshot
-            .run(monty_result, &mut print)
-            .map_err(map_monty_exception)?;
+        let progress = match snapshot {
+            SnapshotState::NoLimit(snapshot) => {
+                let progress = snapshot
+                    .run(monty_result, &mut print)
+                    .map_err(map_monty_exception)?;
+                Progress::from_run_progress_no_limit(progress, print.into_output())
+            }
+            SnapshotState::Limited(snapshot) => {
+                let progress = snapshot
+                    .run(monty_result, &mut print)
+                    .map_err(map_monty_exception)?;
+                Progress::from_run_progress_limited(progress, print.into_output())
+            }
+        }?;
 
-        Progress::from_run_progress(progress, print.into_output())
+        Ok(progress)
     }
 
     /// Resume execution by raising an exception in the Python code.
@@ -86,11 +97,22 @@ impl FunctionCall {
             monty_lang::MontyException::new(monty_lang::ExcType::RuntimeError, Some(message));
         let mut print = CollectStringPrint::new();
 
-        let progress = snapshot
-            .run(ExternalResult::Error(exc), &mut print)
-            .map_err(map_monty_exception)?;
+        let progress = match snapshot {
+            SnapshotState::NoLimit(snapshot) => {
+                let progress = snapshot
+                    .run(ExternalResult::Error(exc), &mut print)
+                    .map_err(map_monty_exception)?;
+                Progress::from_run_progress_no_limit(progress, print.into_output())
+            }
+            SnapshotState::Limited(snapshot) => {
+                let progress = snapshot
+                    .run(ExternalResult::Error(exc), &mut print)
+                    .map_err(map_monty_exception)?;
+                Progress::from_run_progress_limited(progress, print.into_output())
+            }
+        }?;
 
-        Progress::from_run_progress(progress, print.into_output())
+        Ok(progress)
     }
 }
 
@@ -99,7 +121,7 @@ impl FunctionCall {
 pub struct PendingFutures {
     pending_call_ids: Vec<u32>,
     output: String,
-    state: RefCell<Option<FutureSnapshot<NoLimitTracker>>>,
+    state: RefCell<Option<FutureSnapshotState>>,
 }
 
 impl PendingFutures {
@@ -142,11 +164,22 @@ impl PendingFutures {
 
         let mut print = CollectStringPrint::new();
 
-        let progress = snapshot
-            .resume(resolved, &mut print)
-            .map_err(map_monty_exception)?;
+        let progress = match snapshot {
+            FutureSnapshotState::NoLimit(snapshot) => {
+                let progress = snapshot
+                    .resume(resolved, &mut print)
+                    .map_err(map_monty_exception)?;
+                Progress::from_run_progress_no_limit(progress, print.into_output())
+            }
+            FutureSnapshotState::Limited(snapshot) => {
+                let progress = snapshot
+                    .resume(resolved, &mut print)
+                    .map_err(map_monty_exception)?;
+                Progress::from_run_progress_limited(progress, print.into_output())
+            }
+        }?;
 
-        Progress::from_run_progress(progress, print.into_output())
+        Ok(progress)
     }
 }
 
@@ -180,7 +213,7 @@ pub enum Progress {
 }
 
 impl Progress {
-    pub fn from_run_progress(
+    pub fn from_run_progress_no_limit(
         progress: RunProgress<NoLimitTracker>,
         output: String,
     ) -> Result<Self, Error> {
@@ -197,7 +230,7 @@ impl Progress {
                 kwargs,
                 call_id,
                 output,
-                state: RefCell::new(Some(state)),
+                state: RefCell::new(Some(SnapshotState::NoLimit(state))),
             })),
             RunProgress::OsCall {
                 function,
@@ -205,23 +238,20 @@ impl Progress {
                 kwargs,
                 call_id,
                 state,
-            } => {
-                // Map OsCall as a FunctionCall with the function name
-                Ok(Progress::FunctionCall(FunctionCall {
-                    function_name: format!("os:{function:?}"),
-                    args,
-                    kwargs,
-                    call_id,
-                    output,
-                    state: RefCell::new(Some(state)),
-                }))
-            }
+            } => Ok(Progress::FunctionCall(FunctionCall {
+                function_name: format!("os:{function:?}"),
+                args,
+                kwargs,
+                call_id,
+                output,
+                state: RefCell::new(Some(SnapshotState::NoLimit(state))),
+            })),
             RunProgress::ResolveFutures(snapshot) => {
                 let pending_ids = snapshot.pending_call_ids().to_vec();
                 Ok(Progress::PendingFutures(PendingFutures {
                     pending_call_ids: pending_ids,
                     output,
-                    state: RefCell::new(Some(snapshot)),
+                    state: RefCell::new(Some(FutureSnapshotState::NoLimit(snapshot))),
                 }))
             }
             RunProgress::Complete(obj) => Ok(Progress::Complete(Complete {
@@ -230,6 +260,64 @@ impl Progress {
             })),
         }
     }
+
+    pub fn from_run_progress_limited(
+        progress: RunProgress<LimitedTracker>,
+        output: String,
+    ) -> Result<Self, Error> {
+        match progress {
+            RunProgress::FunctionCall {
+                function_name,
+                args,
+                kwargs,
+                call_id,
+                state,
+            } => Ok(Progress::FunctionCall(FunctionCall {
+                function_name,
+                args,
+                kwargs,
+                call_id,
+                output,
+                state: RefCell::new(Some(SnapshotState::Limited(state))),
+            })),
+            RunProgress::OsCall {
+                function,
+                args,
+                kwargs,
+                call_id,
+                state,
+            } => Ok(Progress::FunctionCall(FunctionCall {
+                function_name: format!("os:{function:?}"),
+                args,
+                kwargs,
+                call_id,
+                output,
+                state: RefCell::new(Some(SnapshotState::Limited(state))),
+            })),
+            RunProgress::ResolveFutures(snapshot) => {
+                let pending_ids = snapshot.pending_call_ids().to_vec();
+                Ok(Progress::PendingFutures(PendingFutures {
+                    pending_call_ids: pending_ids,
+                    output,
+                    state: RefCell::new(Some(FutureSnapshotState::Limited(snapshot))),
+                }))
+            }
+            RunProgress::Complete(obj) => Ok(Progress::Complete(Complete {
+                result: RefCell::new(Some(obj)),
+                output,
+            })),
+        }
+    }
+}
+
+enum SnapshotState {
+    NoLimit(Snapshot<NoLimitTracker>),
+    Limited(Snapshot<LimitedTracker>),
+}
+
+enum FutureSnapshotState {
+    NoLimit(FutureSnapshot<NoLimitTracker>),
+    Limited(FutureSnapshot<LimitedTracker>),
 }
 
 impl magnus::IntoValue for Progress {
