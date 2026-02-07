@@ -64,7 +64,7 @@ RSpec.describe Monty::Run do
 
     it "returns dicts as hashes" do
       run = Monty::Run.new("{'a': 1, 'b': 2}")
-      expect(run.call).to eq({ "a" => 1, "b" => 2 })
+      expect(run.call).to eq({"a" => 1, "b" => 2})
     end
 
     it "returns tuples as frozen arrays" do
@@ -78,7 +78,7 @@ RSpec.describe Monty::Run do
       run = Monty::Run.new("{'items': [1, 2, 3], 'nested': {'a': True}}")
       result = run.call
       expect(result["items"]).to eq([1, 2, 3])
-      expect(result["nested"]).to eq({ "a" => true })
+      expect(result["nested"]).to eq({"a" => true})
     end
 
     it "passes Ruby values as inputs" do
@@ -93,7 +93,7 @@ RSpec.describe Monty::Run do
 
     it "passes hashes as dicts" do
       run = Monty::Run.new("data['key']", inputs: ["data"])
-      expect(run.call({ "key" => 42 })).to eq(42)
+      expect(run.call({"key" => 42})).to eq(42)
     end
 
     it "can be called multiple times" do
@@ -139,7 +139,7 @@ RSpec.describe Monty::Run do
   describe "#call with limits" do
     it "accepts resource limit options" do
       run = Monty::Run.new("x + 1", inputs: ["x"])
-      result = run.call(1, limits: { max_duration: 5.0 })
+      result = run.call(1, limits: {max_duration: 5.0})
       expect(result).to eq(2)
     end
   end
@@ -166,7 +166,7 @@ RSpec.describe Monty::Run do
       PYTHON
 
       run = Monty::Run.new(code, external_functions: ["fetch"])
-      progress = run.start(limits: { max_duration: 5.0 })
+      progress = run.start(limits: {max_duration: 5.0})
 
       expect(progress).to be_a(Monty::FunctionCall)
     end
@@ -236,7 +236,7 @@ RSpec.describe Monty::Run do
       PYTHON
 
       run = Monty::Run.new(code, external_functions: ["fetch"])
-      result = run.call_with_externals(capture_output: true, limits: { max_duration: 5.0 }) do |_call|
+      result = run.call_with_externals(capture_output: true, limits: {max_duration: 5.0}) do |_call|
         "ok"
       end
 

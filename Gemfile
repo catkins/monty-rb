@@ -7,6 +7,7 @@ gemspec
 group :development do
   gem "rake-compiler"
   gem "rb_sys"
+  gem "standard"
 end
 
 group :test do
