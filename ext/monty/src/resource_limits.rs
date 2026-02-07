@@ -2,16 +2,16 @@ use magnus::value::ReprValue;
 use magnus::{function, Error, Module, Object, RHash, Ruby, TryConvert, Value};
 use std::time::Duration;
 
-/// Ruby wrapper for monty::ResourceLimits
+/// Ruby wrapper for monty_lang::ResourceLimits
 #[magnus::wrap(class = "Monty::ResourceLimits", free_immediately, size)]
 pub struct ResourceLimits {
     #[allow(dead_code)]
-    pub inner: monty::ResourceLimits,
+    pub inner: monty_lang::ResourceLimits,
 }
 
 impl ResourceLimits {
     fn new(options: Option<RHash>) -> Result<Self, Error> {
-        let mut limits = monty::ResourceLimits::new();
+        let mut limits = monty_lang::ResourceLimits::new();
 
         if let Some(opts) = options {
             if let Some(val) = get_optional_usize(&opts, "max_allocations")? {
@@ -43,8 +43,8 @@ pub fn define_resource_limits_class(ruby: &Ruby, module: &magnus::RModule) -> Re
     Ok(())
 }
 
-pub fn parse_limits_hash(opts: &RHash) -> Result<monty::ResourceLimits, Error> {
-    let mut limits = monty::ResourceLimits::new();
+pub fn parse_limits_hash(opts: &RHash) -> Result<monty_lang::ResourceLimits, Error> {
+    let mut limits = monty_lang::ResourceLimits::new();
 
     if let Some(val) = get_optional_usize(opts, "max_allocations")? {
         limits = limits.max_allocations(val);

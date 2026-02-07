@@ -1,6 +1,6 @@
 use magnus::value::ReprValue;
 use magnus::{function, method, Error, Module, Object, RArray, RHash, Ruby, Value};
-use monty::{CollectStringPrint, LimitedTracker, MontyRun, NoLimitTracker, StdPrint};
+use monty_lang::{CollectStringPrint, LimitedTracker, MontyRun, NoLimitTracker, StdPrint};
 use std::cell::RefCell;
 
 use crate::errors::{consumed_error, map_monty_exception};

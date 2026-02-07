@@ -1,5 +1,5 @@
 [package]
-name = "monty-rb"
+name = "monty"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -11,7 +11,7 @@ name = "monty"
 crate-type = ["cdylib"]
 
 [dependencies]
-monty = { git = "https://github.com/pydantic/monty.git" }
+monty-lang = { package = "monty", git = "https://github.com/pydantic/monty.git" }
 magnus = { version = "0.8", features = ["rb-sys"] }
 rb-sys = { version = "0.9", features = ["stable-api-compiled-fallback"] }
 num-bigint = "0.4"

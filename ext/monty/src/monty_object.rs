@@ -1,6 +1,6 @@
 use magnus::value::ReprValue;
 use magnus::{Error, RArray, RHash, Ruby, TryConvert, Value};
-use monty::MontyObject;
+use monty_lang::MontyObject;
 
 /// Convert a Ruby value to a MontyObject
 pub fn ruby_to_monty(val: Value) -> Result<MontyObject, Error> {

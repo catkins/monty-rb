@@ -1,6 +1,6 @@
 use magnus::value::ReprValue;
 use magnus::{method, Error, Module, RArray, Ruby, Value};
-use monty::{
+use monty_lang::{
     CollectStringPrint, ExternalResult, FutureSnapshot, MontyObject, NoLimitTracker, RunProgress,
     Snapshot,
 };
@@ -82,7 +82,8 @@ impl FunctionCall {
             .take()
             .ok_or_else(consumed_error)?;
 
-        let exc = monty::MontyException::new(monty::ExcType::RuntimeError, Some(message));
+        let exc =
+            monty_lang::MontyException::new(monty_lang::ExcType::RuntimeError, Some(message));
         let mut print = CollectStringPrint::new();
 
         let progress = snapshot

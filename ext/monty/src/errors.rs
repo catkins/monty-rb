@@ -92,36 +92,36 @@ pub fn consumed_error() -> Error {
     })
 }
 
-pub fn map_monty_exception(exc: monty::MontyException) -> Error {
+pub fn map_monty_exception(exc: monty_lang::MontyException) -> Error {
     let summary = exc.summary();
 
     // Check if it's a syntax error
-    if exc.exc_type() == monty::ExcType::SyntaxError {
+    if exc.exc_type() == monty_lang::ExcType::SyntaxError {
         return syntax_error(summary);
     }
 
     monty_error(summary)
 }
 
-pub fn map_resource_error(err: monty::ResourceError) -> Error {
+pub fn map_resource_error(err: monty_lang::ResourceError) -> Error {
     let message = match err {
-        monty::ResourceError::Allocation { limit, count } => {
+        monty_lang::ResourceError::Allocation { limit, count } => {
             format!("allocation limit exceeded: {count} allocations (limit: {limit})")
         }
-        monty::ResourceError::Time { limit, elapsed } => {
+        monty_lang::ResourceError::Time { limit, elapsed } => {
             format!(
                 "time limit exceeded: {:.2}s elapsed (limit: {:.2}s)",
                 elapsed.as_secs_f64(),
                 limit.as_secs_f64()
             )
         }
-        monty::ResourceError::Memory { limit, used } => {
+        monty_lang::ResourceError::Memory { limit, used } => {
             format!("memory limit exceeded: {used} bytes used (limit: {limit})")
         }
-        monty::ResourceError::Recursion { limit, depth } => {
+        monty_lang::ResourceError::Recursion { limit, depth } => {
             format!("recursion limit exceeded: depth {depth} (limit: {limit})")
         }
-        monty::ResourceError::Exception(exc) => {
+        monty_lang::ResourceError::Exception(exc) => {
             return map_monty_exception(exc);
         }
     };
