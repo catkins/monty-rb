@@ -159,6 +159,18 @@ RSpec.describe Monty::Run do
       expect(progress.args).to eq(["https://example.com"])
     end
 
+    it "accepts resource limits" do
+      code = <<~PYTHON
+        result = fetch("https://example.com")
+        result
+      PYTHON
+
+      run = Monty::Run.new(code, external_functions: ["fetch"])
+      progress = run.start(limits: { max_duration: 5.0 })
+
+      expect(progress).to be_a(Monty::FunctionCall)
+    end
+
     it "resumes execution with provided result" do
       code = <<~PYTHON
         result = fetch("https://example.com")
@@ -213,6 +225,24 @@ RSpec.describe Monty::Run do
       end
 
       expect(result).to eq("HELLO FROM RUBY")
+    end
+
+    it "supports limits and output capture" do
+      code = <<~PYTHON
+        print("before")
+        result = fetch("https://example.com")
+        print("after")
+        result
+      PYTHON
+
+      run = Monty::Run.new(code, external_functions: ["fetch"])
+      result = run.call_with_externals(capture_output: true, limits: { max_duration: 5.0 }) do |_call|
+        "ok"
+      end
+
+      expect(result[:result]).to eq("ok")
+      expect(result[:output]).to include("before")
+      expect(result[:output]).to include("after")
     end
 
     it "raises without a block" do
