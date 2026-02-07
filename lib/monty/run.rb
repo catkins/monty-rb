@@ -128,7 +128,7 @@ module Monty
         case progress
         when Monty::Complete
           result = progress.value
-          return capture_output ? { result: result, output: output } : result
+          return capture_output ? {result: result, output: output} : result
         when Monty::FunctionCall
           result = yield progress
           progress = progress.resume(result)

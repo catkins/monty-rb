@@ -48,12 +48,12 @@ RSpec.describe "MontyObject conversion" do
     it "converts hashes to dicts" do
       run = Monty::Run.new("x", inputs: ["x"])
       expect(run.call({})).to eq({})
-      expect(run.call({ "key" => "value" })).to eq({ "key" => "value" })
+      expect(run.call({"key" => "value"})).to eq({"key" => "value"})
     end
 
     it "converts nested structures" do
       run = Monty::Run.new("x", inputs: ["x"])
-      input = { "list" => [1, 2, 3], "nested" => { "a" => true } }
+      input = {"list" => [1, 2, 3], "nested" => {"a" => true}}
       expect(run.call(input)).to eq(input)
     end
 
@@ -120,7 +120,7 @@ RSpec.describe "MontyObject conversion" do
 
     it "dict operations" do
       run = Monty::Run.new("list(d.keys())", inputs: ["d"])
-      expect(run.call({ "a" => 1, "b" => 2 })).to contain_exactly("a", "b")
+      expect(run.call({"a" => 1, "b" => 2})).to contain_exactly("a", "b")
     end
 
     it "arithmetic on inputs" do
