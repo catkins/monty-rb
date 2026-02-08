@@ -6,7 +6,7 @@ require "rb_sys/extensiontask"
 
 RSpec::Core::RakeTask.new(:spec)
 
-GEMSPEC = Gem::Specification.load("monty.gemspec")
+GEMSPEC = Gem::Specification.load("monty-rb.gemspec")
 
 RbSys::ExtensionTask.new("monty", GEMSPEC) do |ext|
   ext.lib_dir = "lib/monty"

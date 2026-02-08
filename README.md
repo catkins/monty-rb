@@ -77,13 +77,13 @@ The native extension is compiled as a C-compatible dynamic library (`cdylib`) vi
 Add to your Gemfile:
 
 ```ruby
-gem "monty"
+gem "monty-rb"
 ```
 
 Or install directly:
 
 ```sh
-gem install monty
+gem install monty-rb
 ```
 
 Requires Rust 1.90+ for compilation.

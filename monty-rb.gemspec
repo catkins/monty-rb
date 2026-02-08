@@ -3,12 +3,12 @@
 require_relative "lib/monty/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "monty"
+  spec.name = "monty-rb"
   spec.version = Monty::VERSION
   spec.authors = ["Monty Contributors"]
   spec.email = []
 
-  spec.summary = "Ruby bindings for Monty"
+  spec.summary = "Ruby bindings for Monty (monty-rb)"
   spec.description = "A minimal, secure Python interpreter for AI agents — Ruby bindings via Magnus"
   spec.homepage = "https://github.com/catkins/monty-rb"
   spec.license = "MIT"
