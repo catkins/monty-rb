@@ -1,5 +1,7 @@
 # Monty Ruby
 
+[![Gem Version](https://badge.fury.io/rb/monty-rb.svg)](https://badge.fury.io/rb/monty-rb)
+
 Ruby bindings for [Monty](https://github.com/pydantic/monty), a minimal and secure Python interpreter written in Rust by [Pydantic](https://pydantic.dev). Built with [Magnus](https://github.com/matsadler/magnus).
 
 ## What is Monty?
